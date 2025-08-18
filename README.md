@@ -1,5 +1,6 @@
 <h1 align='center'>Nequix</h1>
 
+See more information in our [preprint](https://teddykoker.com/docs/nequix.pdf).
 
 ## Usage
 
