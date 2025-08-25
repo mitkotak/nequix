@@ -24,6 +24,8 @@ dependencies = [
     "h5py>=3.14.0",
     "wandb-osh>=1.2.2",
     "cloudpickle>=3.1.1",
+    "rich>=14.1.0",
+    "cuequivariance-jax>=0.6.0",
 ]
 
 [project.urls]

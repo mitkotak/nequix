@@ -9,7 +9,8 @@ import jax.numpy as jnp
 import jraph
 
 from nequix.layer_norm import RMSLayerNorm
-
+import cuequivariance_jax as cuex
+import cuequivariance as cue
 
 def bessel_basis(x: jax.Array, num_basis: int, r_max: float) -> jax.Array:
     prefactor = 2.0 / r_max
@@ -124,8 +125,6 @@ class NequixConvolution(eqx.Module):
         self.avg_n_neighbors = avg_n_neighbors
         self.index_weights = index_weights
 
-        tp_irreps = e3nn.tensor_product(input_irreps, sh_irreps, filter_ir_out=output_irreps)
-
         k1, k2, k3, k4 = jax.random.split(key, 4)
 
         self.linear_1 = e3nn.equinox.Linear(
@@ -133,7 +132,7 @@ class NequixConvolution(eqx.Module):
             irreps_out=input_irreps,
             key=k1,
         )
-
+        tp_irreps = e3nn.tensor_product(input_irreps, sh_irreps, filter_ir_out=output_irreps)
         self.radial_mlp = MLP(
             sizes=[radial_basis_size]
             + [radial_mlp_size] * radial_mlp_layers
@@ -182,6 +181,7 @@ class NequixConvolution(eqx.Module):
         senders: jax.Array,
         receivers: jax.Array,
     ) -> e3nn.IrrepsArray:
+        skip = self.skip(species, features) if self.index_weights else self.skip(features)
         messages = self.linear_1(features)[senders]
         messages = e3nn.tensor_product(messages, sh, filter_ir_out=self.output_irreps)
         radial_message = jax.vmap(self.radial_mlp)(radial_basis)
@@ -190,8 +190,6 @@ class NequixConvolution(eqx.Module):
         messages_agg = e3nn.scatter_sum(
             messages, dst=receivers, output_size=features.shape[0]
         ) / jnp.sqrt(jax.lax.stop_gradient(self.avg_n_neighbors))
-
-        skip = self.skip(species, features) if self.index_weights else self.skip(features)
         features = self.linear_2(messages_agg) + skip
 
         if self.layer_norm is not None:
@@ -311,7 +309,7 @@ class Nequix(eqx.Module):
             normalization="component",
         )
 
-        for layer in self.layers:
+        for i, layer in enumerate(self.layers):
             features = layer(
                 features,
                 species,
