@@ -305,7 +305,7 @@ wheels = [
 [[package]]
 name = "e3nn-jax"
 version = "0.20.8"
-source = { git = "https://github.com/e3nn/e3nn-jax?rev=403f0ef159c537c2efa9d3d05799da85a86575d5#403f0ef159c537c2efa9d3d05799da85a86575d5" }
+source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "attrs" },
     { name = "jax", version = "0.5.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
@@ -314,6 +314,10 @@ dependencies = [
     { name = "jaxlib", version = "0.6.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
     { name = "numpy" },
     { name = "sympy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/11/80/4997de005d240b0674b371828520bac43d9ce8084d4bc21f7965edfaf85f/e3nn_jax-0.20.8.tar.gz", hash = "sha256:ef9ab069fa9a6ee64aa85237d86ce59419a7b8bd9feb6795b61fe9b0c3faaa2a", size = 568007, upload-time = "2025-08-25T20:44:54.082Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/60/ae/de16f8b4f515e3707b415eb36ed2c84003768ad2f98fc4dfc10ff3a57877/e3nn_jax-0.20.8-py3-none-any.whl", hash = "sha256:e4112a1dcb751c7957dc3b8c0177491e91ecea97bf54416f0996f2c4ca7e3b5a", size = 172965, upload-time = "2025-08-25T20:44:52.56Z" },
 ]
 
 [[package]]
@@ -1134,7 +1138,7 @@ dev = [
 requires-dist = [
     { name = "ase", specifier = ">=3.24.0" },
     { name = "cloudpickle", specifier = ">=3.1.1" },
-    { name = "e3nn-jax", git = "https://github.com/e3nn/e3nn-jax?rev=403f0ef159c537c2efa9d3d05799da85a86575d5" },
+    { name = "e3nn-jax", specifier = ">=0.20.8" },
     { name = "equinox", specifier = ">=0.11.11" },
     { name = "h5py", specifier = ">=3.14.0" },
     { name = "jax", marker = "sys_platform == 'darwin'", specifier = ">=0.4.34" },

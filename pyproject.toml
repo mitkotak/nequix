@@ -12,7 +12,7 @@ license = { file = "LICENSE" }
 dependencies = [
     "jax[cuda12]>=0.4.34; sys_platform == 'linux'",
     "jax>=0.4.34; sys_platform == 'darwin'",
-    "e3nn-jax>=0.20.7",
+    "e3nn-jax>=0.20.8",
     "jraph>=0.0.6.dev0",
     "equinox>=0.11.11",
     "optax>=0.2.5",
@@ -41,9 +41,6 @@ build-backend = "hatchling.build"
 
 [tool.hatch.build]
 include = ["nequix/*"]
-
-[tool.uv.sources]
-e3nn-jax = { git = "https://github.com/e3nn/e3nn-jax", rev = "403f0ef159c537c2efa9d3d05799da85a86575d5" }
 
 [dependency-groups]
 dev = [
