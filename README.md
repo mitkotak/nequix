@@ -7,7 +7,7 @@ See more information in our [preprint](https://arxiv.org/abs/2508.16067).
 ### Installation
 
 ```bash
-pip install git+https://github.com/atomicarchitects/nequix
+pip install nequix
 ```
 
 ### ASE calculator
