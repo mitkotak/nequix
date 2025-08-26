@@ -7,7 +7,6 @@ See more information in our [preprint](https://arxiv.org/abs/2508.16067).
 ### Installation
 
 ```bash
-pip install "git+https://github.com/e3nn/e3nn-jax.git" # currently depends on main branch, will be resolved soon
 pip install nequix
 ```
 
