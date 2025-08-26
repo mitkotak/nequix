@@ -1,13 +1,13 @@
 <h1 align='center'>Nequix</h1>
 
-See more information in our [preprint](https://teddykoker.com/docs/nequix.pdf).
+See more information in our [preprint](https://arxiv.org/abs/2508.16067).
 
 ## Usage
 
 ### Installation
 
 ```bash
-pip install git+https://github.com/atomicarchitects/nequix
+pip install nequix
 ```
 
 ### ASE calculator
@@ -59,3 +59,13 @@ config is per-device, so you should be able to run this on any number of GPUs
 (although hyperparameters like learning rate are often sensitive to global batch
 size, so keep in mind).
 
+## Citation
+
+```bibtex
+@article{koker2025training,
+  title={Training a foundation model for materials on a budget},
+  author={Koker, Teddy and Smidt, Tess},
+  journal={arXiv preprint arXiv:2508.16067},
+  year={2025}
+}
+```

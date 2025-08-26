@@ -105,6 +105,7 @@ class NequixConvolution(eqx.Module):
     linear_2: e3nn.equinox.Linear
     skip: e3nn.equinox.Linear
     layer_norm: Optional[RMSLayerNorm]
+    kernel: bool = eqx.field(static=True)
 
     def __init__(
         self,
@@ -120,6 +121,7 @@ class NequixConvolution(eqx.Module):
         avg_n_neighbors: float,
         index_weights: bool = True,
         layer_norm: bool = False,
+        kernel: bool = False,
     ):
         self.output_irreps = output_irreps
         self.avg_n_neighbors = avg_n_neighbors
@@ -172,6 +174,8 @@ class NequixConvolution(eqx.Module):
         else:
             self.layer_norm = None
 
+        self.kernel = kernel
+
     def __call__(
         self,
         features: e3nn.IrrepsArray,
@@ -182,14 +186,36 @@ class NequixConvolution(eqx.Module):
         receivers: jax.Array,
     ) -> e3nn.IrrepsArray:
         skip = self.skip(species, features) if self.index_weights else self.skip(features)
-        messages = self.linear_1(features)[senders]
-        messages = e3nn.tensor_product(messages, sh, filter_ir_out=self.output_irreps)
         radial_message = jax.vmap(self.radial_mlp)(radial_basis)
-        messages = messages * radial_message
+        messages = self.linear_1(features)
 
-        messages_agg = e3nn.scatter_sum(
-            messages, dst=receivers, output_size=features.shape[0]
-        ) / jnp.sqrt(jax.lax.stop_gradient(self.avg_n_neighbors))
+        if self.kernel:
+            num_nodes = features.shape[0]
+            dtype = features.dtype
+            e = cue.descriptors.channelwise_tensor_product(
+                cue.Irreps("O3", [(mul, ir) for mul, ir in messages.irreps]),
+                cue.Irreps("O3", [(mul, ir) for mul, ir in sh.irreps]),
+                cue.Irreps("O3", [(mul, ir) for mul, ir in self.output_irreps]) + "0e",
+                simplify_irreps3=True
+            )
+            [messages_agg] = cuex.equivariant_polynomial(
+                e,
+                [radial_message,
+                 cuex.RepArray(cue.Irreps("O3", [(mul, ir) for mul, ir in messages.irreps]), messages.array, layout=cue.ir_mul),
+                 cuex.RepArray(cue.Irreps("O3", [(mul, ir) for mul, ir in sh.irreps]), sh.array, layout=cue.ir_mul),
+                ],
+                [jax.ShapeDtypeStruct((num_nodes, e.outputs[0].dim), dtype)],
+                [None, senders, None, receivers],
+                method="uniform_1d",
+            )
+            messages_agg = e3nn.IrrepsArray(e3nn.Irreps([(mul, ir.__str__()) for mul, ir in messages_agg.reps[1].irreps]), messages_agg.array)
+        else:
+            messages = e3nn.tensor_product(messages[senders], sh, filter_ir_out=self.output_irreps)
+            messages = messages * radial_message
+            messages_agg = e3nn.scatter_sum(
+                messages, dst=receivers, output_size=features.shape[0]
+            ) / jnp.sqrt(jax.lax.stop_gradient(self.avg_n_neighbors))
+
         features = self.linear_2(messages_agg) + skip
 
         if self.layer_norm is not None:
@@ -235,6 +261,7 @@ class Nequix(eqx.Module):
         avg_n_neighbors: float = 1.0,
         atom_energies: Optional[Sequence[float]] = None,
         layer_norm: bool = False,
+        kernel: bool = False,
     ):
         self.lmax = lmax
         self.cutoff = cutoff
@@ -269,6 +296,7 @@ class Nequix(eqx.Module):
                     avg_n_neighbors=avg_n_neighbors,
                     index_weights=index_weights,
                     layer_norm=layer_norm,
+                    kernel=kernel
                 )
             )
 
