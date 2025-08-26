@@ -2,7 +2,7 @@ state_path: "state.pkl" # for saving/resuming training
 cutoff: 6.0
 
 # dataset specific
-train_path: "data/mptrj-gga-ggapu"
+train_path: "data/mptraj-gga-ggapu"
 cache_dir: "data/"
 valid_frac: 0.05
 
@@ -109,7 +109,7 @@ scale: 0.8066479563713074
 shift: 0.16502578765761478
 
 # model specific
-hidden_irreps: "128x0e + 64x1o + 32x2e + 32x3o"
+hidden_irreps: "64x0e + 64x1o + 64x2e + 64x3o"
 lmax: 3
 n_layers: 4
 radial_basis_size: 8
@@ -119,6 +119,7 @@ radial_polynomial_p: 6.0
 mlp_init_scale: 4.0
 index_weights: false
 layer_norm: true
+kernel: true
 
 # training specific
 optimizer: "muon"
@@ -127,7 +128,7 @@ warmup_epochs: 0.1
 warmup_factor: 0.2
 grad_clip_norm: 100.0
 weight_decay: 1.0e-3
-batch_size: 64  # NOTE: per device
+batch_size: 32  # NOTE: per device
 n_epochs: 100
 energy_weight: 20.0
 force_weight: 20.0
