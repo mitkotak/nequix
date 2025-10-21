@@ -17,7 +17,8 @@ from nequix.data import (
 
 file_format_mapper = {
     "jax": "nqx",
-    "torch": "pt",
+    "torchscript": "pt",
+    "aotinductor": "pt",
 }
 
 
@@ -42,7 +43,7 @@ class NequixCalculator(Calculator):
     ):
         super().__init__(**kwargs)
         if model_path is None:
-            if backend == "torch":
+            if backend == "aotinductor" or backend == "torchscript":
                 import torch
 
                 kernel_name = "kernel" if torch.cuda.is_available() and use_kernel else "no-kernel"
@@ -102,32 +103,36 @@ class NequixCalculator(Calculator):
             energy, forces, stress = eqx.filter_jit(self.model)(graph)
             forces = forces[: len(atoms)]
 
-        elif self.backend == "torch":
+        elif self.backend == "torchscript" or self.backend == "aotinductor":
             import torch
 
             graph = dict_to_pytorch_geometric(processed_graph)
             graph.n_graph = torch.zeros(graph.x.shape[0], dtype=torch.int64).to(self.device)
             graph = graph.to(self.device)
             if not self.compile_state:
-                from torch.fx.experimental.proxy_tensor import make_fx
+                if self.backend == "aotinductor":
+                    from torch.fx.experimental.proxy_tensor import make_fx
 
-                self.model = torch.compile(
-                    make_fx(
-                        self.model,
-                        tracing_mode="symbolic",
-                        _allow_non_fake_inputs=True,
-                        _error_on_data_dependent_ops=True,
-                    )(
-                        graph.x,
-                        graph.positions,
-                        graph.edge_attr,
-                        graph.edge_index,
-                        getattr(graph, "cell", None),
-                        graph.n_node,
-                        graph.n_edge,
-                        graph.n_graph,
+                    self.model = torch.compile(
+                        make_fx(
+                            self.model,
+                            tracing_mode="symbolic",
+                            _allow_non_fake_inputs=True,
+                            _error_on_data_dependent_ops=True,
+                        )(
+                            graph.x,
+                            graph.positions,
+                            graph.edge_attr,
+                            graph.edge_index,
+                            getattr(graph, "cell", None),
+                            graph.n_node,
+                            graph.n_edge,
+                            graph.n_graph,
+                        )
                     )
-                )
+                elif self.backend == "torchscript":
+                    self.model = torch.jit.script(self.model)
+
                 self.compile_state = True
 
             # Need to explicitly list out all the tensors because of make_fx
