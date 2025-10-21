@@ -63,7 +63,7 @@ class NequixCalculator(Calculator):
             from nequix.model import load_model
 
             self.model, self.config = load_model(model_path)
-        elif backend == "torch":
+        elif backend == "torchscript" or backend == "aotinductor":
             import torch
 
             from nequix.torch.model import load_model
@@ -74,6 +74,7 @@ class NequixCalculator(Calculator):
             self.model.eval()
             # setting compile_state to True would skip compilation else will compile for the first time
             # Only use compile for GPUs
+            breakpoint()
             self.compile_state = False if use_compile and torch.cuda.is_available() else True
         else:
             raise ValueError(f"Backend {backend} not supported")
